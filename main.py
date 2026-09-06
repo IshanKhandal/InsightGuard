@@ -10,6 +10,8 @@ Then open http://localhost:8000/docs to see and test every endpoint live
 in your browser — no frontend needed to try it out.
 """
 
+from pydantic import BaseModel
+from gemini_service import analyze_incident
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -354,4 +356,19 @@ def auto_replay_status():
     return {
         "running": _replay_state["running"],
         "events_sent": _replay_state["events_sent"],
+    }
+class InvestigationRequest(BaseModel):
+    alert: dict
+    question: str | None = None
+
+
+@app.post("/api/ai/investigate")
+def investigate(request: InvestigationRequest):
+    result = analyze_incident(
+        request.alert,
+        request.question
+    )
+
+    return {
+        "analysis": result
     }
